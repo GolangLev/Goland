@@ -13,7 +13,7 @@ func NewHandler(services *service.Service) *Handler {
 	return &Handler{services: services}
 }
 
-// InitRoutes /*Инициализация маршрутов работы приложения*/
+// InitRoutes /*Инициализация маршрутов работы приложения /api endpoints*/
 func (h *Handler) InitRoutes() *gin.Engine {
 	router := gin.New()
 
