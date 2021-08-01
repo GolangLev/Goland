@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	todo "github.com/GolangLev/Goland"
 	"github.com/GolangLev/Goland/pkg/handler"
 	"github.com/GolangLev/Goland/pkg/repository"
@@ -10,6 +11,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
@@ -46,8 +49,23 @@ func main() {
 
 	//Server /*Запускаем сервер*/
 	srv := new(todo.Server)
-	if err := srv.Run(viper.GetString("port"), handlers.InitRoutes()); err != nil {
-		logrus.Fatalf("error occured while running server: %s ", err.Error())
+	go func() {
+		if err := srv.Run(viper.GetString("port"), handlers.InitRoutes()); err != nil {
+			logrus.Fatalf("error occured while running server: %s ", err.Error())
+		}
+	}()
+
+	logrus.Print("TodoApp started")
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
+
+	<-quit
+	logrus.Print("TodoApp Shutting Down")
+	if err := srv.ShutDown(context.Background()); err != nil {
+		logrus.Errorf("error occured on server shutting down: %s", err.Error())
+	}
+	if err := db.Close(); err != nil {
+		logrus.Errorf("error occured on db connection close: %s", err.Error())
 	}
 }
 
